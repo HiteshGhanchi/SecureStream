@@ -6,8 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.config import settings
 from app.schemas.auth_schemas import LoginInitRequest, LoginInitResponse
-from app.services.auth_service import build_authorization_url, exchange_code_for_claims, create_access_token, create_refresh_token, handle_refresh
-from app.repositories.repository import get_company_by_domain, get_company_by_id, get_or_create_user
+from app.services.auth_service import (
+    build_authorization_url,
+    get_company_for_domain,
+    handle_login_callback,
+    create_access_token,
+    create_refresh_token,
+    handle_refresh,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,9 +23,9 @@ async def login_init(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-    domain = request.email.split("@")[1]
-    company = await get_company_by_domain(db, domain)
+    company = await get_company_for_domain(db, request.email)
     if company is None:
+        domain = request.email.split("@")[1]
         raise HTTPException(status_code=404, detail=f"No company registered for domain: {domain}")
 
     random_part = secrets.token_urlsafe(32)
@@ -56,18 +62,17 @@ async def callback(
     except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="Malformed state")
 
-    company = await get_company_by_id(db, company_id)
-    if company is None:
-        raise HTTPException(status_code=404, detail="Company not found")
-
     redirect_uri = f"{settings.oidc_redirect_base_url}/auth/callback"
-    claims = await exchange_code_for_claims(company, code, redirect_uri)
-
-    user = await get_or_create_user(db, company.id, claims.email)
+    
+    try:
+        user, _ = await handle_login_callback(db, company_id, code, redirect_uri)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
     await db.commit()
 
-    access_token = create_access_token(user.id, company.id)
-    refresh_token = await create_refresh_token(db, user.id, company.id)
+    access_token = create_access_token(user.id, company_id)
+    refresh_token = await create_refresh_token(db, user.id, company_id)
     await db.commit()
 
     response.set_cookie(

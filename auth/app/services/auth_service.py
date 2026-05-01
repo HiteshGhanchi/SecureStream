@@ -1,11 +1,14 @@
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.db_models import Company
+from app.models.db_models import Company, User
 from app.schemas.auth_schemas import OIDCClaims
 from app.repositories.repository import (
     create_refresh_token_record,
     get_refresh_token_by_jti,
+    get_company_by_domain,
+    get_company_by_id,
+    get_or_create_user,
 )
 from joserfc import jwt as joserfc_jwt
 from datetime import datetime, timedelta, timezone
@@ -96,3 +99,42 @@ async def handle_refresh(db: AsyncSession, refresh_token: str) -> str:
         raise ValueError("Refresh token revoked or unknown")
 
     return create_access_token(payload["user_id"], payload["company_id"])
+
+
+async def get_company_for_domain(db: AsyncSession, email: str) -> Company | None:
+    """
+    Extract domain from email and retrieve the Company configuration for that domain.
+    Returns None if no company is registered for the domain.
+    """
+    domain = email.split("@")[1]
+    return await get_company_by_domain(db, domain)
+
+
+async def get_company_for_id(db: AsyncSession, company_id: int) -> Company | None:
+    """
+    Retrieve a Company by its ID.
+    Returns None if the company is not found.
+    """
+    return await get_company_by_id(db, company_id)
+
+
+async def handle_login_callback(
+    db: AsyncSession, company_id: int, code: str, redirect_uri: str
+) -> tuple[User, OIDCClaims]:
+    """
+    Orchestrate the login callback flow:
+    1. Load the company by ID
+    2. Exchange the authorization code for OIDC claims
+    3. Get or create the user in the database
+    
+    Returns a tuple of (User, OIDCClaims) on success.
+    Raises ValueError or other exceptions if any step fails.
+    """
+    company = await get_company_for_id(db, company_id)
+    if company is None:
+        raise ValueError(f"Company not found: {company_id}")
+    
+    claims = await exchange_code_for_claims(company, code, redirect_uri)
+    user = await get_or_create_user(db, company.id, claims.email)
+    
+    return user, claims
