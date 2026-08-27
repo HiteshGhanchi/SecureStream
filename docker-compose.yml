@@ -79,5 +79,22 @@ services:
       redis:
         condition: service_healthy
 
+  media-postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mediastream_db
+    ports:
+      - "5432:4333"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mediastream_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   auth_postgres_data:
+  media_postgres_data:
