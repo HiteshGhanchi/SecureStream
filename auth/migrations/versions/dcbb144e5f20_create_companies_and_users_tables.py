@@ -1,7 +1,7 @@
 """create companies and users tables
 
 Revision ID: dcbb144e5f20
-Revises: 
+Revises:
 Create Date: 2026-08-23 06:05:21.894039
 
 """
