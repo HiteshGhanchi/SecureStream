@@ -54,8 +54,8 @@ Keycloak realm `companyb`. All credentials in this repo are dev-only.
 
 ## How we work
 
-- One feature or bug = one branch (`feat/f04-media-service`, `fix/processor-db-url`) = one pull request.
-- Never push to `main`; CI must be green before merge; rebase on `main`, no merge commits in branches.
+- Work lands directly on `main` when a feature or bug fix is done: small, focused commits with clear messages, linear history (no merge commits).
+- Run `make lint` and `make test` before pushing; CI runs on every push to `main`.
 - Database changes only through migrations (Alembic in `auth/`, Prisma Migrate in `media-service/`).
 - Every row of tenant data carries `company_id` and every query filters by it.
 - Secrets never enter git: `.env.example` files only, gitleaks in CI and as a pre-commit hook (`make hooks`).
