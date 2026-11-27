@@ -1,68 +1,105 @@
+# Local development stack. Every value below has a dev-only default so
+# `make up` works without a .env file; override any of them in .env
+# (see .env.example). Never reuse these defaults outside your machine.
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 5s
+  timeout: 5s
+  retries: 20
+  start_period: 10s
+
 services:
   auth-postgres:
-    image: postgres:18
+    image: postgres:18.7
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${AUTH_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-postgres}
       POSTGRES_DB: securestream_auth
     ports:
-      - "5432:5432"
+      - "${AUTH_DB_PORT:-5432}:5432"
     volumes:
       - auth_postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d securestream_auth"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d securestream_auth"]
+
+  media-postgres:
+    image: postgres:18.7
+    environment:
+      POSTGRES_USER: ${MEDIA_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${MEDIA_DB_PASSWORD:-postgres}
+      POSTGRES_DB: mediastream_db
+    ports:
+      - "${MEDIA_DB_PORT:-5433}:5432"
+    volumes:
+      - media_postgres_data:/var/lib/postgresql
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d mediastream_db"]
 
   keycloak:
-    image: quay.io/keycloak/keycloak:latest
+    # Dev only: plays the identity provider of the sample tenant companies.
+    image: quay.io/keycloak/keycloak:26.8.1
     command: start-dev --import-realm
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
     volumes:
-      - ./keycloak/import:/opt/keycloak/data/import
+      - ./keycloak/import:/opt/keycloak/data/import:ro
     ports:
       - "8080:8080"
+    healthcheck:
+      <<: *healthcheck-defaults
+      retries: 40
+      # The image has no curl; probe the management port with bash.
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.12-alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
+      <<: *healthcheck-defaults
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
 
   auth:
     build:
       context: ./auth
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@auth-postgres:5432/securestream_auth
-      JWT_SECRET: local-development-secret
+      DATABASE_URL: postgresql+asyncpg://${AUTH_DB_USER:-postgres}:${AUTH_DB_PASSWORD:-postgres}@auth-postgres:5432/securestream_auth
+      JWT_SECRET: ${JWT_SECRET:-local-development-secret}
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       OIDC_REDIRECT_BASE_URL: http://localhost:8000
-    # Lets the seeded issuer URL (http://localhost:8080) reach Keycloak on the host.
+    # Lets the seeded issuer URL (http://localhost:8080) reach Keycloak on the
+    # host. Replaced by KC_HOSTNAME + backchannel config in F2/F3.
     extra_hosts:
       - "localhost:host-gateway"
     volumes:
       - ./auth:/app
+    # Published only until F3 moves the OIDC callback behind the gateway.
     ports:
       - "8000:8000"
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
     depends_on:
       auth-postgres:
         condition: service_healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
 
   api-gateway:
     build:
       context: ./api-gateway
     environment:
-      JWT_SECRET: local-development-secret
+      JWT_SECRET: ${JWT_SECRET:-local-development-secret}
       JWT_ALGORITHM: HS256
       REDIS_URL: redis://redis:6379/0
       AUTH_SERVICE_URL: http://auth:8000
@@ -73,27 +110,30 @@ services:
       - ./api-gateway:/app
     ports:
       - "8001:8001"
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/ready', timeout=3)"]
     depends_on:
       auth:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
 
-  media-postgres:
-    image: postgres:18
+  media-service:
+    build:
+      context: ./media-service
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mediastream_db
-    ports:
-      - "5432:4333"
-    volumes:
-      - auth_postgres_data:/var/lib/postgresql
+      PORT: 8002
+      DATABASE_URL: postgresql://${MEDIA_DB_USER:-postgres}:${MEDIA_DB_PASSWORD:-postgres}@media-postgres:5432/mediastream_db
+    # Not published: reached through the gateway once F3 adds routing.
+    expose:
+      - "8002"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d mediastream_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      <<: *healthcheck-defaults
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8002/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+    depends_on:
+      media-postgres:
+        condition: service_healthy
 
 volumes:
   auth_postgres_data:
