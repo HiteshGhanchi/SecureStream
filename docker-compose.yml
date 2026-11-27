@@ -61,7 +61,7 @@ services:
           grep -q '"UP"' <&3
 
   redis:
-    image: redis:7.4.12-alpine
+    image: redis:8.12.0-alpine
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
