@@ -1,0 +1,15 @@
+# gitleaks config: default rules plus a narrow allowlist for dev-only fixtures.
+# Anything allowlisted here must be a value that only works on a local stack.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dev-only fixtures: the sample Keycloak realm and unit-test fake secrets"
+paths = [
+  '''^keycloak/import/.*-realm\.json$''',
+]
+regexes = [
+  '''dev-only-fixed-secret-do-not-use-in-prod''',
+  '''local-development-secret''',
+  '''test-secret(-not-real)?''',
+]

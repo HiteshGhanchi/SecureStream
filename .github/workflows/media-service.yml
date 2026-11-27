@@ -1,0 +1,46 @@
+name: media-service
+
+on:
+  push:
+    branches: [main]
+    paths: ["media-service/**", ".github/workflows/media-service.yml"]
+  pull_request:
+    paths: ["media-service/**", ".github/workflows/media-service.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: media-service-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: media-service
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: media-service/package-lock.json
+
+      - run: npm ci --ignore-scripts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
