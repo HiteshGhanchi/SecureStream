@@ -1,8 +1,32 @@
+# Python
 venv/
+.venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Node
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+src/generated/
+
+# Secrets and local env (only .env.example files are committed)
 .env
 .env.*
-node_modules/
+!.env.example
+*.pem
+*.key
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local notes
 PROJECT.md
 USER_FLOW.md
