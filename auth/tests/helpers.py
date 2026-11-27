@@ -1,5 +1,6 @@
+from datetime import UTC, datetime, timedelta
+
 import jwt as pyjwt
-from datetime import datetime, timedelta, timezone
 
 from app.core.config import settings
 
@@ -11,7 +12,7 @@ def make_test_refresh_token(
     expired: bool = False,
     secret: str | None = None,
 ) -> str:
-    exp = datetime.now(timezone.utc) - timedelta(days=1) if expired else datetime.now(timezone.utc) + timedelta(days=7)
+    exp = datetime.now(UTC) - timedelta(days=1) if expired else datetime.now(UTC) + timedelta(days=7)
     payload = {
         "user_id": user_id,
         "company_id": company_id,
@@ -32,7 +33,7 @@ def make_test_access_token(
     expired: bool = False,
     secret: str | None = None,
 ) -> str:
-    exp = datetime.now(timezone.utc) - timedelta(days=1) if expired else datetime.now(timezone.utc) + timedelta(minutes=5)
+    exp = datetime.now(UTC) - timedelta(days=1) if expired else datetime.now(UTC) + timedelta(minutes=5)
     payload = {
         "user_id": user_id,
         "company_id": company_id,

@@ -1,11 +1,13 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, ForeignKey, UniqueConstraint, func, DateTime
-from datetime import datetime
-from typing import Optional
 import uuid
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
 
 class Base(DeclarativeBase):
     pass
+
 
 class Company(Base):
     __tablename__ = "companies"
@@ -17,19 +19,19 @@ class Company(Base):
     oidc_client_secret: Mapped[str] = mapped_column(String(512))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     email: Mapped[str] = mapped_column(String(255))
-    manager_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    manager_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     is_master_account: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (
-        UniqueConstraint("company_id", "email", name="uq_user_company_email"),
-    )
+    __table_args__ = (UniqueConstraint("company_id", "email", name="uq_user_company_email"),)
+
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"

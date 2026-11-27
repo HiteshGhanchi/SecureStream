@@ -1,6 +1,5 @@
 from redis.asyncio import Redis
 
-
 SLIDING_WINDOW_SCRIPT = """
 local now = tonumber(ARGV[1])
 local window_start = now - tonumber(ARGV[2])

@@ -1,21 +1,22 @@
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db
 from app.core.config import settings
+from app.core.db import get_db
 from app.schemas.auth_schemas import LoginInitRequest, LoginInitResponse
 from app.services.auth_service import (
     build_authorization_url,
-    get_company_for_domain,
-    handle_login_callback,
     create_access_token,
     create_refresh_token,
+    get_company_for_domain,
+    handle_login_callback,
     handle_refresh,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
 
 @router.post("/login-init", response_model=LoginInitResponse)
 async def login_init(
@@ -44,6 +45,7 @@ async def login_init(
 
     return LoginInitResponse(redirect_url=redirect_url)
 
+
 @router.get("/callback")
 async def callback(
     code: str,
@@ -59,16 +61,16 @@ async def callback(
     try:
         _, company_id_str = state.split(":")
         company_id = int(company_id_str)
-    except (ValueError, IndexError):
-        raise HTTPException(status_code=400, detail="Malformed state")
+    except (ValueError, IndexError) as e:
+        raise HTTPException(status_code=400, detail="Malformed state") from e
 
     redirect_uri = f"{settings.oidc_redirect_base_url}/auth/callback"
-    
+
     try:
         user, _ = await handle_login_callback(db, company_id, code, redirect_uri)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
     await db.commit()
 
     access_token = create_access_token(user.id, company_id)
@@ -85,6 +87,7 @@ async def callback(
 
     return {"access_token": access_token, "user_id": user.id, "email": user.email}
 
+
 @router.post("/refresh")
 async def refresh(request: Request, db: AsyncSession = Depends(get_db)):
     refresh_token = request.cookies.get("refresh_token")
@@ -94,6 +97,6 @@ async def refresh(request: Request, db: AsyncSession = Depends(get_db)):
     try:
         new_access_token = await handle_refresh(db, refresh_token)
     except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=str(e)) from e
 
     return {"access_token": new_access_token}
