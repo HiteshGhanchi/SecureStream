@@ -9,7 +9,7 @@ paths = [
   '''^keycloak/import/.*-realm\.json$''',
 ]
 regexes = [
-  '''dev-only-fixed-secret-do-not-use-in-prod''',
+  '''dev-only-[a-z-]*-do-not-use-in-prod''',
   '''local-development-secret''',
   '''test-secret(-not-real)?''',
 ]
