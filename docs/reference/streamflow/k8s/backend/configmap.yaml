@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: backend
+data:
+  PORT: "3000"
+  KEYCLOAK_REALM: "streamflow"
+  S3_RAW_BUCKET: "streamflow-raw-videos"
+  S3_HLS_BUCKET: "streamflow-hls-segments"
+  AWS_REGION: "ap-south-1"
+  CORS_ORIGIN: "https://dr24mnb9l9w2c.cloudfront.net"
+  KEYCLOAK_URL: "http://keycloak.auth.svc.cluster.local:8080"
+  AWS_ENDPOINT: ""
+  AWS_PRESIGN_ENDPOINT: ""

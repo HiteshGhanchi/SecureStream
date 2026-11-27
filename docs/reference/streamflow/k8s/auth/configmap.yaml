@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: auth
+data:
+  KC_HOSTNAME: "keycloak.dr24mnb9l9w2c.cloudfront.net"
+  KC_DB_URL: "jdbc:postgresql://placeholder:5432/keycloak"
