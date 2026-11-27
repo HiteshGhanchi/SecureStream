@@ -2,7 +2,7 @@ import os
 
 os.environ.setdefault("JWT_SECRET", "test-secret")
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
@@ -17,7 +17,7 @@ def token(**claims: object) -> str:
             "user_id": 1,
             "company_id": 2,
             "type": "access",
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "exp": datetime.now(UTC) + timedelta(minutes=5),
             **claims,
         },
         "test-secret",
@@ -38,7 +38,7 @@ def test_verify_access_token_rejects_wrong_type() -> None:
 
 def test_verify_access_token_rejects_expired_token() -> None:
     expired = jwt.encode(
-        {"user_id": 1, "company_id": 2, "type": "access", "exp": datetime.now(timezone.utc) - timedelta(minutes=1)},
+        {"user_id": 1, "company_id": 2, "type": "access", "exp": datetime.now(UTC) - timedelta(minutes=1)},
         "test-secret",
         algorithm="HS256",
     )

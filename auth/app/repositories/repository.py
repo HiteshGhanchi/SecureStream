@@ -15,9 +15,7 @@ async def get_company_by_id(db: AsyncSession, company_id: int) -> Company | None
 
 
 async def get_or_create_user(db: AsyncSession, company_id: int, email: str) -> User:
-    result = await db.execute(
-        select(User).where(User.company_id == company_id, User.email == email)
-    )
+    result = await db.execute(select(User).where(User.company_id == company_id, User.email == email))
     user = result.scalar_one_or_none()
 
     if user is not None:
@@ -29,17 +27,13 @@ async def get_or_create_user(db: AsyncSession, company_id: int, email: str) -> U
     return user
 
 
-async def create_refresh_token_record(
-    db: AsyncSession, jti: str, user_id: int, expires_at
-) -> RefreshToken:
+async def create_refresh_token_record(db: AsyncSession, jti: str, user_id: int, expires_at) -> RefreshToken:
     refresh_token = RefreshToken(jti=jti, user_id=user_id, expires_at=expires_at)
     db.add(refresh_token)
     await db.flush()
     return refresh_token
 
 
-async def get_refresh_token_by_jti(
-    db: AsyncSession, jti: str
-) -> RefreshToken | None:
+async def get_refresh_token_by_jti(db: AsyncSession, jti: str) -> RefreshToken | None:
     result = await db.execute(select(RefreshToken).where(RefreshToken.jti == jti))
     return result.scalar_one_or_none()

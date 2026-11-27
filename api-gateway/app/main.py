@@ -21,7 +21,18 @@ rate_limiter = SlidingWindowRateLimiter(
 
 @app.get("/health")
 async def health() -> dict[str, str]:
+    """Liveness: the process is up and serving requests."""
     return {"status": "ok"}
+
+
+@app.get("/ready")
+async def ready() -> JSONResponse:
+    """Readiness: Redis (rate limiting) is reachable."""
+    try:
+        await redis.ping()
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "unavailable", "redis": "down"})
+    return JSONResponse(content={"status": "ok", "redis": "up"})
 
 
 @app.api_route(

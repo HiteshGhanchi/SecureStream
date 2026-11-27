@@ -7,7 +7,6 @@ from starlette.responses import Response
 from app.core.config import settings
 from app.security import GatewayIdentity
 
-
 HOP_BY_HOP_HEADERS = {
     "connection",
     "keep-alive",
@@ -48,9 +47,7 @@ async def forward_request(request: Request, identity: GatewayIdentity | None, pa
         )
 
     response_headers = {
-        key: value
-        for key, value in upstream.headers.items()
-        if key.lower() not in HOP_BY_HOP_HEADERS
+        key: value for key, value in upstream.headers.items() if key.lower() not in HOP_BY_HOP_HEADERS
     }
     return Response(
         content=upstream.content,

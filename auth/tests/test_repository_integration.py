@@ -1,11 +1,13 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from app.models.db_models import Company, User, RefreshToken
+
+from app.models.db_models import Company
 from app.repositories.repository import (
+    create_refresh_token_record,
     get_company_by_domain,
     get_company_by_id,
     get_or_create_user,
-    create_refresh_token_record,
     get_refresh_token_by_jti,
 )
 
@@ -132,7 +134,7 @@ async def test_create_refresh_token_record_and_get_by_jti(db):
     await db.flush()
 
     jti = "test-jti-12345"
-    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    expires_at = datetime.now(UTC) + timedelta(days=7)
 
     record = await create_refresh_token_record(db, jti, user.id, expires_at)
     await db.flush()
@@ -173,7 +175,7 @@ async def test_revoked_refresh_token_is_readable(db):
     await db.flush()
 
     jti = "revoked-jti-999"
-    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    expires_at = datetime.now(UTC) + timedelta(days=7)
 
     # Create a refresh token record
     record = await create_refresh_token_record(db, jti, user.id, expires_at)
