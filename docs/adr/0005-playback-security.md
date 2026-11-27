@@ -8,7 +8,8 @@
 StreamFlow's HLS bucket was public: anyone with a URL could watch any video. We
 need private storage, playback authorised per viewer (employee or verified link
 recipient), short-lived URLs, and per-viewer playlists (ADR 0001 leak tracing
-assigns segments per viewer). It must work with MinIO in dev and S3/CloudFront later.
+assigns segments per viewer). It must work with S3-compatible storage in dev (SeaweedFS, since MinIO no longer
+publishes images) and S3/CloudFront later.
 
 ## Options
 
