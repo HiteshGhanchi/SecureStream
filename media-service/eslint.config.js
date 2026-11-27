@@ -3,7 +3,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist/', 'src/generated/', 'node_modules/'] },
+  { ignores: ['dist/', 'src/generated/', 'node_modules/', 'streamflow-core-backend/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

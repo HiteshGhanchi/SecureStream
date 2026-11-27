@@ -1,0 +1,125 @@
+/* Upload Video Component */
+.upload-shell {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(26, 26, 26, 0.8) 100%);
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.upload-shell:hover {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(26, 26, 26, 0.6) 100%);
+}
+
+.upload-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.upload-label {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.upload-detail {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.upload-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.file-input-shell {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 200ms ease;
+  font-weight: 600;
+}
+
+.file-input-shell:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.file-input-shell:active {
+  transform: scale(0.98);
+}
+
+.file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+
+.file-input-label {
+  position: relative;
+  z-index: 1;
+}
+
+.upload-status {
+  margin: 0;
+  padding: 12px;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+}
+
+.outline-button {
+  border: 1px solid var(--border);
+  padding: 10px 24px;
+  border-radius: 8px;
+  transition: all 200ms ease;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.outline-button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.outline-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .upload-shell {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .upload-controls {
+    flex-direction: column;
+  }
+
+  .file-input-shell,
+  .outline-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

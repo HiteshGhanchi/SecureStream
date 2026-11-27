@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  viewer
+  creator
+  admin
+}
+
+enum VideoStatus {
+  pending
+  uploaded
+  processing
+  ready
+  failed
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  name       String?
+  role       Role     @default(viewer)
+  google_id  String?
+  created_at DateTime @default(now())
+  
+  videos     Video[]
+}
+
+model Video {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  status      VideoStatus @default(pending)
+  uploader_id String
+  uploader    User        @relation(fields: [uploader_id], references: [id])
+  hls_url     String?
+  duration    Int?        
+  views       Int         @default(0)
+  created_at  DateTime    @default(now())
+}

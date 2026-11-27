@@ -1,0 +1,17 @@
+FROM node:24-alpine
+
+WORKDIR /app
+
+# 1. Give the node user ownership of the /app directory
+RUN chown -R node:node /app
+
+# 2. Switch to the node user
+USER node
+
+# 3. Explicitly transfer ownership during the COPY step!
+COPY --chown=node:node package*.json ./
+
+# 4. Now the node user can freely read/write to the lockfile
+RUN npm install
+
+CMD ["npm", "run", "dev"]
