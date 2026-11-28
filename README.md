@@ -4,8 +4,9 @@ Secure, traceable video links for companies. Send a confidential video to anyone
 inside or outside your company: every viewer is identified, every view is measured,
 and a leaked copy can be traced back to the person who leaked it.
 
-> Status: early development (feature F0, repository foundation). The product
-> direction and key technical decisions are recorded in [`docs/adr/`](docs/adr/).
+> Status: early development (F0 and F1 done). **Start with [`docs/ROADMAP.md`](docs/ROADMAP.md)**:
+> the product, the feature plan and its status, known bugs, and how we work.
+> Key technical decisions are in [`docs/adr/`](docs/adr/).
 
 ## What's in this repo
 
